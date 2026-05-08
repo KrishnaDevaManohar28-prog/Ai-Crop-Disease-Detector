@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Crop Disease Detector</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
+
+body{
+min-height:100vh;
+background:
+linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+overflow-x:hidden;
+color:white;
+}
+
+.bg{
+position:fixed;
+width:100%;
+height:100%;
+top:0;
+left:0;
+z-index:-1;
+overflow:hidden;
+}
+
+.circle{
+position:absolute;
+border-radius:50%;
+background:rgba(255,255,255,0.08);
+backdrop-filter:blur(20px);
+animation:float 8s infinite ease-in-out;
+}
+
+.circle:nth-child(1){
+width:300px;
+height:300px;
+top:10%;
+left:5%;
+}
+
+.circle:nth-child(2){
+width:250px;
+height:250px;
+bottom:10%;
+right:10%;
+}
+
+@keyframes float{
+0%{transform:translateY(0px);}
+50%{transform:translateY(-20px);}
+100%{transform:translateY(0px);}
+}
+
+header{
+padding:30px;
+text-align:center;
+}
+
+.logo{
+font-size:70px;
+margin-bottom:10px;
+}
+
+header h1{
+font-size:42px;
+font-weight:700;
+}
+
+header p{
+opacity:.8;
+margin-top:10px;
+}
+
+.container{
+width:90%;
+max-width:1400px;
+margin:auto;
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:30px;
+padding-bottom:50px;
+}
+
+.glass{
+background:rgba(255,255,255,0.08);
+backdrop-filter:blur(20px);
+border:1px solid rgba(255,255,255,0.15);
+border-radius:30px;
+padding:30px;
+box-shadow:0 8px 32px rgba(0,0,0,.3);
+}
+
+.section-title{
+font-size:28px;
+font-weight:600;
+margin-bottom:25px;
+}
+
+.upload-box{
+border:3px dashed rgba(255,255,255,.3);
+border-radius:25px;
+height:350px;
+display:flex;
+align-items:center;
+justify-content:center;
+flex-direction:column;
+cursor:pointer;
+transition:.3s;
+background:rgba(255,255,255,.05);
+}
+
+.upload-box:hover{
+transform:scale(1.02);
+border-color:#4ade80;
+background:rgba(255,255,255,.08);
+}
+
+.upload-box input{
+display:none;
+}
+
+.upload-icon{
+font-size:90px;
+margin-bottom:20px;
+}
+
+.upload-box h3{
+font-size:28px;
+margin-bottom:10px;
+}
+
+.upload-box p{
+opacity:.7;
+}
+
+.btn{
+width:100%;
+margin-top:25px;
+padding:18px;
+border:none;
+border-radius:18px;
+font-size:20px;
+font-weight:600;
+cursor:pointer;
+background:linear-gradient(135deg,#22c55e,#16a34a);
+color:white;
+transition:.3s;
+}
+
+.btn:hover{
+transform:translateY(-3px);
+box-shadow:0 10px 20px rgba(34,197,94,.4);
+}
+
+.preview{
+width:100%;
+border-radius:25px;
+margin-top:20px;
+display:none;
+box-shadow:0 10px 20px rgba(0,0,0,.3);
+}
+
+.result-card{
+margin-top:20px;
+padding:25px;
+border-radius:20px;
+background:rgba(255,255,255,.08);
+display:none;
+}
+
+.result-card h2{
+font-size:35px;
+color:#4ade80;
+margin-bottom:15px;
+}
+
+.result-card p{
+font-size:20px;
+margin-bottom:10px;
+}
+
+.treatment{
+margin-top:20px;
+padding:20px;
+border-radius:20px;
+background:rgba(255,255,255,.06);
+display:none;
+}
+
+.treatment h3{
+margin-bottom:15px;
+font-size:24px;
+color:#4ade80;
+}
+
+.loader{
+display:none;
+margin-top:30px;
+text-align:center;
+}
+
+.spinner{
+width:80px;
+height:80px;
+border:8px solid rgba(255,255,255,.2);
+border-top:8px solid #4ade80;
+border-radius:50%;
+margin:auto;
+animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+100%{
+transform:rotate(360deg);
+}
+}
+
+.loader p{
+margin-top:20px;
+font-size:22px;
+font-weight:500;
+}
+
+@media(max-width:900px){
+
+.container{
+grid-template-columns:1fr;
+}
+
+header h1{
+font-size:30px;
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="bg">
+<div class="circle"></div>
+<div class="circle"></div>
+</div>
+
+<header>
+
+<div class="logo">🌿</div>
+
+<h1>AI Crop Disease Detector</h1>
+
+<p>
+Smart AI Powered Plant Disease Detection System
+</p>
+
+</header>
+
+<div class="container">
+
+<div class="glass">
+
+<div class="section-title">
+Upload Plant Leaf
+</div>
+
+<label class="upload-box">
+
+<div class="upload-icon">📷</div>
+
+<h3>Upload Leaf Image</h3>
+
+<p>Supported: JPG, PNG, JPEG</p>
+
+<input type="file" id="imageInput">
+
+</label>
+
+<button class="btn" onclick="predictDisease()">
+Detect Disease
+</button>
+
+<div class="loader" id="loader">
+
+<div class="spinner"></div>
+
+<p>Please wait... AI is processing image</p>
+
+</div>
+
+</div>
+
+<div class="glass">
+
+<div class="section-title">
+Detection Result
+</div>
+
+<img id="preview" class="preview">
+
+<div class="result-card" id="resultCard">
+
+<h2 id="disease"></h2>
+
+<p>
+<b>Confidence:</b>
+<span id="confidence"></span>
+</p>
+
+<p>
+<b>Status:</b>
+<span id="status"></span>
+</p>
+
+</div>
+
+<div class="treatment" id="treatmentBox">
+
+<h3>Recommended Treatment</h3>
+
+<p id="treatment"></p>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+async function predictDisease(){
+
+const fileInput =
+document.getElementById("imageInput");
+
+if(fileInput.files.length===0){
+
+alert("Please upload image");
+
+return;
+}
+
+const file = fileInput.files[0];
+
+document.getElementById("preview").src =
+URL.createObjectURL(file);
+
+document.getElementById("preview").style.display =
+"block";
+
+document.getElementById("loader").style.display =
+"block";
+
+document.getElementById("resultCard").style.display =
+"none";
+
+document.getElementById("treatmentBox").style.display =
+"none";
+
+const formData = new FormData();
+
+formData.append("image",file);
+
+try{
+
+const response = await fetch("/predict",{
+method:"POST",
+body:formData
+});
+
+const data = await response.json();
+
+document.getElementById("loader").style.display =
+"none";
+
+document.getElementById("resultCard").style.display =
+"block";
+
+document.getElementById("treatmentBox").style.display =
+"block";
+
+document.getElementById("disease").innerText =
+data.disease;
+
+document.getElementById("confidence").innerText =
+data.confidence;
+
+document.getElementById("status").innerText =
+data.status;
+
+document.getElementById("treatment").innerText =
+data.treatment;
+
+}catch(error){
+
+document.getElementById("loader").style.display =
+"none";
+
+alert("Prediction failed");
+
+}
+
+}
+
+</script>
+
+</body>
+</html>

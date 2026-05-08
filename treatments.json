@@ -1,0 +1,22 @@
+{
+  "Apple___Apple_scab": "Apply fungicide (Captan or Mancozeb). Remove infected leaves. Prune trees for air circulation.",
+  "Apple___Black_rot": "Remove mummified fruits. Apply copper-based fungicide. Prune dead wood.",
+  "Apple___healthy": "Plant is healthy! Maintain regular watering and fertilization.",
+  "Corn_(maize)___Common_rust_": "Apply fungicide early. Use rust-resistant hybrid seeds.",
+  "Corn_(maize)___Northern_Leaf_Blight": "Apply fungicide (propiconazole). Use resistant varieties. Rotate crops.",
+  "Corn_(maize)___healthy": "Plant is healthy! Ensure proper nitrogen fertilization.",
+  "Grape___Black_rot": "Apply mancozeb or myclobutanil. Remove infected berries. Improve air flow.",
+  "Grape___healthy": "Plant is healthy! Monitor for pests regularly.",
+  "Potato___Early_blight": "Apply chlorothalonil or mancozeb. Remove infected leaves. Avoid overhead irrigation.",
+  "Potato___Late_blight": "Apply metalaxyl fungicide immediately. Destroy infected plants. Improve drainage.",
+  "Potato___healthy": "Plant is healthy! Ensure proper hilling and irrigation.",
+  "Tomato___Bacterial_spot": "Apply copper bactericide. Avoid wetting foliage. Use disease-free seeds.",
+  "Tomato___Early_blight": "Apply chlorothalonil fungicide. Mulch around plants. Remove lower infected leaves.",
+  "Tomato___Late_blight": "Apply mancozeb or chlorothalonil. Remove infected plants. Avoid overhead watering.",
+  "Tomato___Septoria_leaf_spot": "Apply copper fungicide. Remove infected leaves. Avoid wetting foliage.",
+  "Tomato___Spider_mites Two-spotted_spider_mite": "Apply miticide or neem oil. Increase humidity.",
+  "Tomato___Target_Spot": "Apply fungicide (azoxystrobin). Improve air circulation.",
+  "Tomato___Tomato_Yellow_Leaf_Curl_Virus": "No cure. Remove infected plants. Control whitefly population.",
+  "Tomato___Tomato_mosaic_virus": "No cure. Remove and destroy infected plants. Disinfect tools with bleach.",
+  "Tomato___healthy": "Plant is healthy! Maintain consistent watering and support with stakes."
+}
