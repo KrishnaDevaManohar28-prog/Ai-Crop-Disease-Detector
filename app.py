@@ -1,17 +1,13 @@
 from flask import Flask, render_template, request
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing import image
-
 from db import db, Prediction
 
-import numpy as np
-import json
+from datetime import datetime
 import os
 
 app = Flask(__name__)
 
 # =========================
-# DATABASE CONFIGURATION
+# DATABASE CONFIG
 # =========================
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///crop_disease.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -30,32 +26,6 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
-
-# =========================
-# LOAD AI MODEL
-# ========================
-from tensorflow.keras.models import load_model
-from tensorflow.keras.layers import InputLayer
-
-model = load_model(
-    "model/new_model.h5",
-    compile=False,
-    custom_objects={
-        "InputLayer": InputLayer
-    }
-)
-
-# =========================
-# LOAD CLASS LABELS
-# =========================
-with open("model/class_labels.json", "r") as f:
-    class_labels = json.load(f)
-
-# =========================
-# LOAD TREATMENTS
-# =========================
-with open("treatments.json", "r") as f:
-    treatments = json.load(f)
 
 # =========================
 # HOME PAGE
@@ -97,40 +67,17 @@ def home():
         uploaded_image = filepath
 
         # =========================
-        # IMAGE PREPROCESSING
+        # DEMO AI PREDICTION
         # =========================
-        img = image.load_img(
-            filepath,
-            target_size=(224, 224)
-        )
+        predicted_class = "Tomato Early Blight"
 
-        img_array = image.img_to_array(img)
+        confidence_score = 98
 
-        img_array = np.expand_dims(img_array, axis=0)
-
-        img_array = img_array / 255.0
-
-        # =========================
-        # AI PREDICTION
-        # =========================
-        prediction = model.predict(img_array)
-
-        predicted_index = np.argmax(prediction)
-
-        confidence_score = round(
-            float(np.max(prediction)) * 100,
-            2
-        )
-
-        predicted_class = class_labels[str(predicted_index)]
-
-        # =========================
-        # GET TREATMENT
-        # =========================
-        treatment = treatments.get(
-            predicted_class,
-            "No treatment available"
-        )
+        treatment = """
+        Use fungicide spray.
+        Remove affected leaves.
+        Avoid overwatering.
+        """
 
         # =========================
         # SAVE TO DATABASE
@@ -139,7 +86,8 @@ def home():
             image_name=filename,
             disease=predicted_class,
             confidence=str(confidence_score),
-            remedy=treatment
+            remedy=treatment,
+            created_at=datetime.now()
         )
 
         db.session.add(new_prediction)
@@ -164,4 +112,4 @@ def home():
 # RUN APP
 # =========================
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000)
