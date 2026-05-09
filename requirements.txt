@@ -1,8 +1,8 @@
-Flask
-flask-sqlalchemy
-gunicorn
-tensorflow-cpu
-numpy
-Pillow
-h5py
-werkzeug
+Flask==3.0.3
+flask-sqlalchemy==3.1.1
+gunicorn==22.0.0
+tensorflow-cpu==2.16.1
+numpy==1.26.4
+Pillow==10.3.0
+h5py==3.11.0
+werkzeug==3.0.2
