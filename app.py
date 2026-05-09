@@ -34,9 +34,15 @@ if not os.path.exists(UPLOAD_FOLDER):
 # =========================
 # LOAD AI MODEL
 # ========================
+from tensorflow.keras.models import load_model
+from tensorflow.keras.layers import InputLayer
+
 model = load_model(
     "model/model.h5",
-    compile=False
+    compile=False,
+    custom_objects={
+        "InputLayer": InputLayer
+    }
 )
 
 # =========================
