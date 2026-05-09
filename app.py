@@ -38,7 +38,7 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.layers import InputLayer
 
 model = load_model(
-    "model/model.h5",
+    "model/new_model.h5",
     compile=False,
     custom_objects={
         "InputLayer": InputLayer
