@@ -33,8 +33,11 @@ if not os.path.exists(UPLOAD_FOLDER):
 
 # =========================
 # LOAD AI MODEL
-# =========================
-model = load_model("model/model.h5")
+# ========================
+model = load_model(
+    "model/model.h5",
+    compile=False
+)
 
 # =========================
 # LOAD CLASS LABELS
