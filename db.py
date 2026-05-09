@@ -1,15 +1,18 @@
-from pymongo import MongoClient
+from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
-client     = MongoClient("mongodb://localhost:27017/")
-db         = client["crop_disease_db"]
-collection = db["predictions"]
+db = SQLAlchemy()
 
-def save_prediction(data: dict):
-    try:
-        collection.insert_one(data)
-    except Exception as e:
-        print(f"DB Error: {e}")
+class Prediction(db.Model):
 
-def get_all_predictions():
-    return list(collection.find({}, {"_id": 0}))
+    id = db.Column(db.Integer, primary_key=True)
+
+    image_name = db.Column(db.String(200))
+    disease = db.Column(db.String(200))
+    confidence = db.Column(db.String(50))
+    remedy = db.Column(db.Text)
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )

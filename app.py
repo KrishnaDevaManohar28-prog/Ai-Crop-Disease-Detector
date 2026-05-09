@@ -1,174 +1,158 @@
-from flask import Flask, request, jsonify, render_template
-from flask_cors import CORS
+from flask import Flask, render_template, request
 from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing import image
+
+from db import db, Prediction
+
 import numpy as np
-from PIL import Image
 import json
-from db import save_prediction, get_all_predictions
+import os
 
 app = Flask(__name__)
-CORS(app)
 
-print("Loading model...")
+# =========================
+# DATABASE CONFIGURATION
+# =========================
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///crop_disease.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# LOAD MODEL
+db.init_app(app)
+
+with app.app_context():
+    db.create_all()
+
+# =========================
+# UPLOAD FOLDER
+# =========================
+UPLOAD_FOLDER = "uploads"
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+# =========================
+# LOAD AI MODEL
+# =========================
 model = load_model("model/model.h5")
 
-# LOAD LABELS
-with open("model/class_labels.json") as f:
+# =========================
+# LOAD CLASS LABELS
+# =========================
+with open("model/class_labels.json", "r") as f:
     class_labels = json.load(f)
 
+# =========================
 # LOAD TREATMENTS
-with open("treatments.json") as f:
+# =========================
+with open("treatments.json", "r") as f:
     treatments = json.load(f)
 
-print("Model ready!")
-
+# =========================
 # HOME PAGE
-@app.route("/")
+# =========================
+@app.route("/", methods=["GET", "POST"])
 def home():
-    return render_template("index.html")
 
-# IMAGE PREPROCESSING
-def preprocess_image(file):
+    result = None
+    uploaded_image = None
 
-    img = Image.open(file).convert("RGB")
+    if request.method == "POST":
 
-    img = img.resize((224, 224))
+        if "image" not in request.files:
+            return render_template(
+                "index.html",
+                result="No image uploaded"
+            )
 
-    arr = np.array(img) / 255.0
+        file = request.files["image"]
 
-    arr = np.expand_dims(arr, axis=0)
+        if file.filename == "":
+            return render_template(
+                "index.html",
+                result="No file selected"
+            )
 
-    return arr
+        # =========================
+        # SAVE IMAGE
+        # =========================
+        filename = file.filename
 
-# PREDICTION ROUTE
-@app.route("/predict", methods=["POST"])
-def predict():
-
-    if "image" not in request.files:
-        return jsonify({
-            "error": "No image uploaded"
-        }), 400
-
-    file = request.files["image"]
-
-    try:
-
-        # PREPROCESS IMAGE
-        arr = preprocess_image(file)
-
-        # MODEL PREDICTION
-        preds = model.predict(arr)[0]
-
-        # CONFIDENCE
-        conf = float(np.max(preds)) * 100
-
-        # PREDICTED INDEX
-        idx = int(np.argmax(preds))
-
-        # TOP 3 DEBUG
-        top3 = preds.argsort()[-3:][::-1]
-
-        print("\nTop Predictions:")
-
-        for i in top3:
-
-            label = class_labels.get(str(i), "Unknown")
-
-            score = float(preds[i]) * 100
-
-            print(f"{label} --> {score:.2f}%")
-
-        # LOW CONFIDENCE CHECK
-        if conf < 50:
-
-            return jsonify({
-
-                "disease": "Unknown Disease",
-
-                "confidence": f"{conf:.2f}%",
-
-                "treatment":
-                "Image unclear. Please upload a clearer leaf image.",
-
-                "status": "Uncertain Prediction",
-
-                "is_healthy": False
-
-            })
-
-        # DISEASE LABEL
-        disease = class_labels.get(str(idx), "Unknown")
-
-        # CLEAN NAME
-        clean_disease = disease.replace(
-            "___",
-            " "
-        ).replace(
-            "_",
-            " "
-        ).strip()
-
-        # TREATMENT
-        treatment = treatments.get(
-
-            clean_disease,
-
-            "Consult an agricultural expert."
-
+        filepath = os.path.join(
+            app.config['UPLOAD_FOLDER'],
+            filename
         )
 
-        # HEALTH STATUS
-        is_healthy = "healthy" in clean_disease.lower()
+        file.save(filepath)
 
-        # FINAL RESULT
+        uploaded_image = filepath
+
+        # =========================
+        # IMAGE PREPROCESSING
+        # =========================
+        img = image.load_img(
+            filepath,
+            target_size=(224, 224)
+        )
+
+        img_array = image.img_to_array(img)
+
+        img_array = np.expand_dims(img_array, axis=0)
+
+        img_array = img_array / 255.0
+
+        # =========================
+        # AI PREDICTION
+        # =========================
+        prediction = model.predict(img_array)
+
+        predicted_index = np.argmax(prediction)
+
+        confidence_score = round(
+            float(np.max(prediction)) * 100,
+            2
+        )
+
+        predicted_class = class_labels[str(predicted_index)]
+
+        # =========================
+        # GET TREATMENT
+        # =========================
+        treatment = treatments.get(
+            predicted_class,
+            "No treatment available"
+        )
+
+        # =========================
+        # SAVE TO DATABASE
+        # =========================
+        new_prediction = Prediction(
+            image_name=filename,
+            disease=predicted_class,
+            confidence=str(confidence_score),
+            remedy=treatment
+        )
+
+        db.session.add(new_prediction)
+        db.session.commit()
+
+        # =========================
+        # RESULT
+        # =========================
         result = {
-
-            "disease": clean_disease,
-
-            "confidence": f"{conf:.2f}%",
-
-            "treatment": treatment,
-
-            "is_healthy": is_healthy,
-
-            "status":
-            "Healthy" if is_healthy
-            else "Disease Detected"
+            "disease": predicted_class,
+            "confidence": confidence_score,
+            "treatment": treatment
         }
 
-        # SAVE HISTORY
-        save_prediction({
-
-            "disease": clean_disease,
-
-            "confidence": f"{conf:.2f}%",
-
-            "treatment": treatment,
-
-            "filename": file.filename
-
-        })
-
-        return jsonify(result)
-
-    except Exception as e:
-
-        return jsonify({
-            "error": str(e)
-        }), 500
-
-# HISTORY ROUTE
-@app.route("/history", methods=["GET"])
-def history():
-
-    return jsonify(get_all_predictions())
-
-# START SERVER
-if __name__ == "__main__":
-
-    app.run(
-        debug=True,
-        port=5000
+    return render_template(
+        "index.html",
+        result=result,
+        uploaded_image=uploaded_image
     )
+
+# =========================
+# RUN APP
+# =========================
+if __name__ == "__main__":
+    app.run(debug=True)
